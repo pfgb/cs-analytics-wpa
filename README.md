@@ -8,13 +8,13 @@ It has two main features:
 
 The main round-win probability model was trained on a small dataset (available on the tick_dataset.parquet) of grand finals found on HLTV.
 
-Tested models included logistical regression, small neural networks and XGBoost, which proved to be the best model on most settings.
+Tested models included logistic regression, small neural networks and XGBoost, which proved to be the best model on most settings.
 
 
 ## Project Structure:
 * notebooks:
   * baseline_model: a simple model that calculates the probability based on the round-start equipment from both teams;
-  * in_round_model: calculates the P(CT round win) as kills and events change its pobability;
+  * in_round_model: calculates the P(CT round win) as kills and events change its probability;
   * player_wpa_analysis: calculates aggregated player's WPA through a match.
 * src (most important files):
   * app.py: streamlit app that calculates aggregated WPA for every player, shows every round win probability and most impactful plays (use in your matches!)
