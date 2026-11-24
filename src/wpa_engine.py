@@ -115,8 +115,11 @@ def calculate_match_wpa(
 
 
     # Adding attacker and victim handles and bomb plants
-    wpa_events = df.join(kills_df, on=["round_num", "tick"], how="left")
-    wpa_events = wpa_events.join(plant_events, on=["round_num", "tick"], how="left")
+    #wpa_events = df.join(kills_df, on=["round_num", "tick"], how="left")
+    #wpa_events = wpa_events.join(plant_events, on=["round_num", "tick"], how="left")
+    event_logs = pl.concat([kills_df, plant_events]) if not plant_events.is_empty() else kills_df
+    wpa_events = df.join(event_logs, on=["round_num", "tick"], how="left")
+
     wpa_events = wpa_events.sort("tick")
 
     wpa_events = wpa_events.with_columns([
