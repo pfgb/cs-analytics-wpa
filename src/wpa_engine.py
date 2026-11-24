@@ -9,15 +9,29 @@ import polars as pl
 import numpy as np
 import awpy
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 from src.tick_features import extract_in_round_events
+from src.features import extract_round_economy_features
 
 def calculate_match_wpa(
-    dem: awpy.Demo, model: XGBClassifier, scaler: StandardScaler = None
+    dem: awpy.Demo, model: XGBClassifier, economy_model: LogisticalRegression, scaler: StandardScaler = None, econ_scaler: StandardScaler = None
 ) -> pl.DataFrame:
     """
     Computes Win Probability Added (WPA) for every kill and every bomb plant in a match (defusals not implemented)
     """
+
+    # Extracts the economy features to calculate round-start win probability
+    econ_df = extract_round_economy_features(dem)
+    econ_features = ["ct_equip_value", "t_equip_value", "equip_value_ratio"]
+    X_econ = econ_df.select(features).to_numpy()
+    if econ_scaler is not None:
+        X_econ = econ_scaler.transform(X_econ)
+
+    # Calculates predicted round start win probability based on the economic features and the logistic regression model
+    round_start_probs = economy_model.predict_proba(X_econ)[:, 1]
+    econ_df = econ_df.with_columns(pl.Series("round_start_prob", round_start_probs))
+    
 
     # Extracts the match demo
     df = extract_in_round_events(dem)
@@ -27,19 +41,23 @@ def calculate_match_wpa(
     X = df.select(features).to_numpy()
     if scaler is not None:
         X = scaler.transform(X)
-
+    
     # Predicted Win Probability
     ct_probs = model.predict_proba(X)[:, 1]
     df = df.with_columns(pl.Series("ct_win_prob", ct_probs))
 
     df = df.sort("tick")
 
+    df = df.join(econ_df.select("round_start_prob"), on="round_num", how="left").with_columns(
+        pl.col("round_start_prob").fill_null(0.50)
+    )
+
     # Previous win probability (round start is 0.5 by default (not realistic change this later))
     df = df.with_columns(
         pl.col("ct_win_prob")
         .shift(1)
         .over("round_num")
-        .fill_null(0.50)
+        .fill_null(pl.col("round_start_prob"))
         .alias("prev_ct_win_prob")
     ).with_columns(
         (pl.col("ct_win_prob") - pl.col("prev_ct_win_prob")).alias("delta_p")
