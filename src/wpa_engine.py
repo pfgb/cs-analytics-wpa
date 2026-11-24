@@ -119,6 +119,8 @@ def aggregate_player_wpa(wpa_events: pl.DataFrame) -> pl.DataFrame:
     Aggregates the tables returned from the previous functions
     """
 
+    n_rounds = wpa_events["round_num"].max()
+
     actor_stats = (
         wpa_events.filter(pl.col("actor_name").is_not_null())
         .group_by("actor_name")
@@ -144,9 +146,9 @@ def aggregate_player_wpa(wpa_events: pl.DataFrame) -> pl.DataFrame:
         actor_stats.join(victim_stats, on="player_name", how="full")
         .fill_null(0.0)
         .with_columns(
-            (pl.col("positive_wpa") + pl.col("negative_wpa")).alias("total_net_wpa")
+            ((pl.col("positive_wpa") + pl.col("negative_wpa")) / n_rounds).alias("average_wpa")
         )
-        .sort("total_net_wpa", descending=True)
+        .sort("average_wpa", descending=True)
     )
 
     return leaderboard

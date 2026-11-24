@@ -77,17 +77,17 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.dataframe(
         df_leaderboard[[
-            "player_name", "total_net_wpa"
+            "player_name", "average_wpa"
         ]].style.format({
-            "total_net_wpa": "{:+.3f}"
-        }).background_gradient(subset=["total_net_wpa"], cmap="RdYlGn"),
+            "average_wpa": "{:+.2%}"
+        }).background_gradient(subset=["average_wpa"], cmap="RdYlGn"),
         width="stretch"
     )
 
 with col2:
     st.info("""
-    **Understanding Net WPA:**
-    Net_WPA = Positive_WPA + Negative_WPA: Total round win probability added during a match
+    **Understanding Average WPA:**
+    Average_WPA = (Positive_WPA + Negative_WPA) / N: Average (by rounds played) round win probability added during a match
     Positive WPA is acquired by killing enemies or planting the bomb, Negative by getting killed.
     """)
 
