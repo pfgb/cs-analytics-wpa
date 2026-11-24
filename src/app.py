@@ -8,7 +8,9 @@ from pathlib import Path
 from xgboost import XGBClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-
+from sklearn.neural_network import MLPClassifier
+from sklearn.calibration import calibration_curve
+from sklearn.calibration import CalibratedClassifierCV
 from features import extract_round_economy_features
 from tick_features import extract_in_round_events
 from wpa_engine import calculate_match_wpa, aggregate_player_wpa
@@ -60,10 +62,14 @@ def train_econ_model():
     #econ_scaler = StandardScaler()
     #X_econ_scaled = econ_scaler.fit_transform(X_econ)
 
-    econ_lr = LogisticRegression(random_state=42)
-    econ_lr.fit(X_econ, Y_econ)
+    #econ_lr = LogisticRegression(random_state=42)
+    #econ_lr.fit(X_econ, Y_econ)
 
-    return econ_lr
+    econ_mlp = MLPClassifier(hidden_layer_sizes=(64, 32), activation="relu", solver="adam", random_state=42, learning_rate = "adaptive", max_iter=1000)
+    calibrated_econ_mlp = CalibratedClassifierCV(econ_mlp, method="isotonic", cv=5)
+    calibrated_econ_mlp.fit(X_econ, Y_econ)
+
+    return calibrated_econ_mlp
 
 st.title("CS2 Live Round Win Probability")
 st.markdown("""
