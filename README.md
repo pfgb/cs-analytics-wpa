@@ -10,6 +10,10 @@ The main round-win probability model was trained on a small dataset (available o
 
 Tested models included logistic regression, small neural networks and XGBoost, which proved to be the best model on most settings.
 
+The applied model is XGBoost for in-round live probability while a standard Neural Network was used to calculate the round-start win probability based on the economy features on economy_dataset.parquet
+
+
+
 
 ## Project Structure:
 * notebooks:
@@ -25,8 +29,7 @@ Tested models included logistic regression, small neural networks and XGBoost, w
 
 This is primarily a learning project, so there are glaring simplifications and limitations:
 * Bomb plants are tracked but bomb defusals are not;
-* Every round starts with 50% CT Win probability for WPA purposes;
-* The training dataset contains 23 maps, or 6 recent Grand Finals: FURIA vs Spirit; MOUZ vs MongolZ; FURIA vs Nemiga; FURIA vs BetBoom; Vitality vs MOUZ; Vitality vs Aurora. A bigger dataset would return a more accurate model (if this surprisingly becomes a useful model, I will improve this).
+* The training dataset contains 41 maps, which is a marked improvement over the initial database of just 12 maps, but still far short of the ideal size for neural networks.
 
 Though simplistic, lots of useful things were learned during this project from data processing (including the polars library which I had never used before and awpy) to a hands-on Machine Learning application (my past adventures here were on research problems with Deep Learning models like N-BEATS). Even Git is a newer thing for me, so the overall objective of being educational was achieved.
 
