@@ -7,8 +7,9 @@ import awpy
 from pathlib import Path
 from xgboost import XGBClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 
-
+from features import extract_round_economy_features
 from tick_features import extract_in_round_events
 from wpa_engine import calculate_match_wpa, aggregate_player_wpa
 
@@ -21,8 +22,13 @@ st.set_page_config(
 @st.cache_resource
 def train_model():
     dataset_path = Path("data/processed_demos/tick_dataset.parquet")
+    econ_dataset_path = Path("data/processed_demos/economy_dataset.parquet")
     if not dataset_path.exists():
         st.error("Processed dataset not found!")
+        st.stop()
+
+    if not econ_dataset_path.exists():
+        st.error("Economy dataset not found!")
         st.stop()
 
     train_df = pl.read_parquet(dataset_path)
@@ -37,6 +43,27 @@ def train_model():
     xgb.fit(X_train, Y_train)
 
     return xgb
+
+@st.cache_resource
+def train_econ_model():
+    econ_dataset_path = Path("data/processed_demos/economy_dataset.parquet")
+
+    if not econ_dataset_path.exists():
+        st.error("Economy dataset not found!")
+        st.stop()
+
+    econ_df = pl.read_parquet(econ_dataset_path)
+    features = ["ct_equip_value", "t_equip_value", "equip_value_ratio"]
+    X_econ = econ_df[features]
+    Y_econ = econ_df["ct_win"]
+
+    #econ_scaler = StandardScaler()
+    #X_econ_scaled = econ_scaler.fit_transform(X_econ)
+
+    econ_lr = LogisticRegression(random_state=42)
+    econ_lr.fit(X_econ, Y_econ)
+
+    return econ_lr
 
 st.title("CS2 Live Round Win Probability")
 st.markdown("""
@@ -62,10 +89,11 @@ if st.sidebar.button("Retrain Model"):
     st.rerun()
 
 model = train_model()
+econ_model = train_econ_model()
 
 with st.spinner("Processing match events and calculating WPA..."):
     dem = awpy.Demo(str(selected_demo))
-    wpa_events = calculate_match_wpa(dem, model)
+    wpa_events = calculate_match_wpa(dem, model, econ_model)
     leaderboard = aggregate_player_wpa(wpa_events)
 
 st.subheader("Player Impact: WPA, K/D")

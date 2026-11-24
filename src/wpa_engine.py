@@ -15,7 +15,7 @@ from src.tick_features import extract_in_round_events
 from src.features import extract_round_economy_features
 
 def calculate_match_wpa(
-    dem: awpy.Demo, model: XGBClassifier, economy_model: LogisticalRegression, scaler: StandardScaler = None, econ_scaler: StandardScaler = None
+    dem: awpy.Demo, model: XGBClassifier, economy_model: LogisticRegression, scaler: StandardScaler = None, econ_scaler: StandardScaler = None
 ) -> pl.DataFrame:
     """
     Computes Win Probability Added (WPA) for every kill and every bomb plant in a match (defusals not implemented)
@@ -24,7 +24,8 @@ def calculate_match_wpa(
     # Extracts the economy features to calculate round-start win probability
     econ_df = extract_round_economy_features(dem)
     econ_features = ["ct_equip_value", "t_equip_value", "equip_value_ratio"]
-    X_econ = econ_df.select(features).to_numpy()
+    X_econ = econ_df.select(econ_features).to_numpy()
+
     if econ_scaler is not None:
         X_econ = econ_scaler.transform(X_econ)
 
@@ -48,9 +49,13 @@ def calculate_match_wpa(
 
     df = df.sort("tick")
 
-    df = df.join(econ_df.select("round_start_prob"), on="round_num", how="left").with_columns(
+    print(df.columns)
+    print(econ_df.columns)
+
+    df = df.join(econ_df.select("round_num", "round_start_prob"), on="round_num", how="left").with_columns(
         pl.col("round_start_prob").fill_null(0.50)
     )
+
 
     # Previous win probability (round start is 0.5 by default (not realistic change this later))
     df = df.with_columns(
